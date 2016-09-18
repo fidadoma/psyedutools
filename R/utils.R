@@ -84,3 +84,39 @@ normalize_flow <- function(df, flowcol) {
   df <- df2 %>% select(-tskor)
   return(df)
 }
+
+#' Performs many one sample tests and outputs as data_frame()
+#'
+#' @param df - data frame containing given variables
+#' @param varlist - variables to be tested
+#' @param testvals - mean values to be tested against. If only one value is used, all variables will be tested against this value
+#'
+#' @return data frame with results for one sample test
+#' @export
+#'
+#' @examples
+multiple_onesample_ttests <- function(df, varlist, testvals, meansd_decpoints = 2, pval_decpoints = 3) {
+  if (length(testvals) == 1) {
+    testvals <- rep(testvals, times = length(varlist))
+  }
+  
+  n <- length(varlist)
+  
+  stopifnot(length(testvals) == n)
+  
+  dfout <- data_frame(variable = varlist, tested_val = testvals, mean = numeric(n), sd = numeric(n), t = numeric(n), df = numeric(n), p = numeric(n))
+  
+  for (i in 1:n) {
+    g1 <- df[[varlist[i]]]
+    
+    
+    dfout$mean[i] <- g1 %>% mean(na.rm = T) %>% round(digits = meansd_decpoints)
+    dfout$sd[i]   <- g1 %>% sd(na.rm = T) %>% round(digits = meansd_decpoints)
+    tt <- t.test(g1, mu = testvals[i])
+    
+    dfout$t[i] <- round(tt$statistic, meansd_decpoints)
+    dfout$df[i] <- tt$parameter
+    dfout$p[i] <- round(tt$p.value, pval_decpoints)
+  }
+  return(dfout)
+}
