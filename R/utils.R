@@ -39,8 +39,8 @@ test3groups <- function(df, varlist, groupvarname = "group", group1, group2, gro
     dfout$group1sd[i] <- g1 %>% sd(na.rm = T) %>% round(digits = meansd_decpoints)
     dfout$group2mean[i] <- g2 %>% mean(na.rm = T) %>% round(digits = meansd_decpoints)
     dfout$group2sd[i] <- g2 %>% sd(na.rm = T) %>% round(digits = meansd_decpoints)
-    dfout$group3mean[i] <- g2 %>% mean(na.rm = T) %>% round(digits = meansd_decpoints)
-    dfout$group3sd[i] <- g2 %>% sd(na.rm = T) %>% round(digits = meansd_decpoints)
+    dfout$group3mean[i] <- g3 %>% mean(na.rm = T) %>% round(digits = meansd_decpoints)
+    dfout$group3sd[i] <- g3 %>% sd(na.rm = T) %>% round(digits = meansd_decpoints)
     
     dfG <- data.frame(val = c(g1,g2,g3),group = c(rep(group1,length(g1)), rep(group2,length(g2)), rep(group3,length(g3))))
     dfG$id <- 1:nrow(dfG)
@@ -53,7 +53,7 @@ test3groups <- function(df, varlist, groupvarname = "group", group1, group2, gro
     
     dfout$eta_sq[i] <- round(aov1$ANOVA$ges, meansd_decpoints)
     
-    ci <- MBESS::ci.pvaf(F.value = dfout$F[i],
+    ci <- MBESS::ci.pvaf(F.value = aov1$ANOVA$F,
             df.1 = dfout$df1[i],
             df.2 = dfout$df2[i],
             N = nrow(dfG[complete.cases(dfG),]),
