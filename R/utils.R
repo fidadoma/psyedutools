@@ -157,3 +157,20 @@ multiple_onesample_ttests <- function(df, varlist, testvals, meansd_decpoints = 
   }
   return(dfout)
 }
+
+
+#' Print stars based on p-value
+#'
+#' @param pv - p- value
+#'
+#' @return stars based on the level of p-value
+#' @export
+#'
+#' @examples
+print_stars<-function(pv) {
+  
+  Signif <- symnum(pv, corr = FALSE, na = FALSE, 
+                   cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
+                   symbols = c("***", "**", "*", ".", "")) 
+  return(Signif[[1]])
+}
