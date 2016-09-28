@@ -26,7 +26,7 @@ test2groups <- function(df, varlist, groupvarname = "group", group1 = "P", group
   dfout
 }
 
-test3groups <- function(df, varlist, groupvarname = "group", group1, group2, group3, meansd_decpoints = 2, pval_decpoints = 3) {
+test3groups <- function(df, varlist, groupvarname = "group", group1, group2, group3, meansd_decpoints = 2, pval_decpoints = 3, boot_CI = F) {
   n <- length(varlist)
   dfout <- data_frame(variable = varlist, group1mean = numeric(n), group1sd = numeric(n), group2mean = numeric(n), group2sd = numeric(n), group3mean = numeric(n), group3sd = numeric(n), F = numeric(n), df1 = numeric(n), df2 = numeric(n), p = numeric(n), eta_sq = numeric(n), eta_sq_CI = character(n))
   
@@ -51,6 +51,9 @@ test3groups <- function(df, varlist, groupvarname = "group", group1, group2, gro
     dfout$df2[i] <- aov1$ANOVA$DFd
     dfout$p[i] <- round(aov1$ANOVA$p, pval_decpoints)
     
+    if (boot_CI) {
+      aov_etasq_p <- anova_etasq_p_ci(dfG[complete.cases(dfG),], formula(val ~ group))
+    } else {
     dfout$eta_sq[i] <- round(aov1$ANOVA$ges, meansd_decpoints)
     
     ci <- MBESS::ci.pvaf(F.value = aov1$ANOVA$F,
@@ -61,12 +64,43 @@ test3groups <- function(df, varlist, groupvarname = "group", group1, group2, gro
     
     dfout$eta_sq_CI[i] <- paste0("[", ci$Lower.Limit.Proportion.of.Variance.Accounted.for %>% round(meansd_decpoints), ", ", ci$Upper.Limit.Proportion.of.Variance.Accounted.for %>% round(meansd_decpoints), "]")
     
-    
+    }
   }
   colnames(dfout)[2:7] <- c(sprintf("group%smean", group1), sprintf("group%ssd", group1),
                             sprintf("group%smean", group2), sprintf("group%ssd", group2),
                             sprintf("group%smean", group3), sprintf("group%ssd", group3))
   dfout
+}
+
+etasq_p <- function(formula, data, indices) {
+  d <- data[indices,] # allows boot to select sample 
+  dfx <- lm(formula, data = d) %>% car::Anova() %>% broom::tidy()
+  
+  ressq <- dfx %>% filter(term == "Residuals") %>% .$sumsq
+  eta.sq <- dfx %>% group_by(term) %>% mutate(eta.sq = sumsq / (sumsq + ressq)) %>% .$eta.sq
+  return(eta.sq)
+} 
+
+
+anova_etasq_p_ci <- function(df, f, nSamp = 1000) {
+  dfx <- lm(f, data = df) %>% car::Anova() %>% broom::tidy()
+  dfx$eta.sq.p <- NA
+  dfx$eta.sq.p.lo <- NA
+  dfx$eta.sq.p.hi <- NA
+  
+  results <- boot::boot(data = df, statistic = etasq_p, R=nSamp, formula = f)
+  
+  for (i in 1:(length(results$t0)-1)){
+    dfx$eta.sq.p[i] <- results$t0[i]
+    
+    bci <- boot::boot.ci(results, type="bca",index = i) 
+    dfx$eta.sq.p.lo[i] <- bci$bca[length(bci$bca) - 1]
+    dfx$eta.sq.p.hi[i] <- bci$bca[length(bci$bca)]
+  }
+  dfx <- dfx %>% mutate(statistic = round(statistic,2),p.value = round(p.value,3),eta.sq.p = round(eta.sq.p,2), eta.sq.p.lo = round(eta.sq.p.lo,2), eta.sq.p.hi = round(eta.sq.p.hi,2))
+  return(dfx)
+  
+  
 }
 
 #' normalize_flow
