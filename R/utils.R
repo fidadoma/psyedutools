@@ -53,6 +53,9 @@ test3groups <- function(df, varlist, groupvarname = "group", group1, group2, gro
     
     if (boot_CI) {
       aov_etasq_p <- anova_etasq_p_ci(dfG[complete.cases(dfG),], formula(val ~ group))
+      dfout$eta_sq[i] <- aov_etasq_p$eta.sq.p[1]
+      dfout$eta_sq_CI[i] <- paste0("[", aov_etasq_p$eta.sq.p.lo[1], ", ", aov_etasq_p$eta.sq.p.hi[1], "]")
+      
     } else {
     dfout$eta_sq[i] <- round(aov1$ANOVA$ges, meansd_decpoints)
     
