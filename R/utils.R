@@ -172,7 +172,7 @@ print_stars<-function(pv) {
   Signif <- symnum(pv, corr = FALSE, na = FALSE, 
                    cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
                    symbols = c("***", "**", "*", ".", "")) 
-  return(Signif[[1]])
+  return(Signif)
 }
 
 
