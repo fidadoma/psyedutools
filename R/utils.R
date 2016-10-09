@@ -174,3 +174,39 @@ print_stars<-function(pv) {
                    symbols = c("***", "**", "*", ".", "")) 
   return(Signif[[1]])
 }
+
+
+#' Impute data per questionnaire
+#'
+#' @param df data frame
+#' @param colnames column names (quoted for non standard evaluation) to check
+#'
+#' @return
+#' @export
+#'
+#' @examples
+impute_data_mean_per_subj <- function(df, colnames) {
+  
+  df_subset <- df %>% select_(colnames)
+  
+  # we need only rows, where only one variable is missing
+  imputable <- rowSums(df_subset %>% is.na()) == 1 
+  
+  # select subset of data frame with imputable values
+  newRows <- df_subset %>% filter(imputable)
+  
+  # we will impute by mean value
+  inputValues <- df_subset %>% filter(imputable) %>% rowMeans(na.rm = T)
+  
+  # sanity check, number of missing values should correspond to the lenght f input vector
+  stopifnot(sum(is.na(newRows)) == length(inputValues))
+  
+  # input data
+  newRows[is.na(newRows)] <- inputValues
+  
+  ixCols <- colnames(df_subset)
+  df[imputable, ixCols] <- newRows
+  
+  return(df)
+  
+}
